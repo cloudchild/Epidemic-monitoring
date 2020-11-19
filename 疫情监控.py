@@ -103,9 +103,11 @@ from lxml import etree
 #         dead = city_infos['total']['dead']  # 死亡
 #         print(province_name, city_name, confirm, confirm_add, heal, dead)
 
-# 爬腾讯数据:
 import requests
 import json
+import pymysql
+
+# 爬腾讯数据:
 def get_data():
     url = "https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5"
     headers = {
@@ -115,7 +117,9 @@ def get_data():
     d = json.loads(res.text) # json.loads方法是将字符串转为字典
     data_all = json.loads(d["data"])
     areaTree_data = data_all["areaTree"]
-    history = data_all["chinaTotal"]# 历史数据 需要 累计确诊, 累计治愈,累计死亡, 现有确诊,无症状感染者,境外输入
+    history = {}
+    ds = data_all['lastUpdateTime']
+    history[ds].update(data_all["chinaTotal"])# 历史数据 需要 累计确诊, 累计治愈,累计死亡, 现有确诊,无症状感染者,境外输入
 
     details = [] # 当天详细数据
     update_time = data_all['lastUpdateTime']
@@ -132,3 +136,12 @@ def get_data():
             dead = city_infos['total']['dead']  # 死亡
             details.append([update_time,province_name, city_name, confirm, confirm_add, heal, dead])
     return history,details
+
+# 存储数据
+import pymysql
+conn = pymysql.connect(
+    host="localhost",
+    user="epi",
+    password="123456"
+)  # 注意自己的用户名 与密码
+print(conn)
